@@ -21,7 +21,7 @@ catkin_package(
 )
 
 catkin_install_python(
-   PROGRAMS scripts/fy03_localization_node.py
+   PROGRAMS scripts/dwm1001_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

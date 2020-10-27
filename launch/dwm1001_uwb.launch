@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="dwm1001_node" pkg="ros_dwm1001" type="dwm1001_node.py" respawn="false" output="screen"/>
+</launch>
