@@ -6,9 +6,8 @@ The hardware driver for the DWM1001 sensor is ROS-agnostic, meaning it provides 
 
 ## Prerequisites
 ### Software
-- Ubiquity Robotics Raspberry Pi Image: https://downloads.ubiquityrobotics.com/pi.html
-        - Ubuntu 16.04 (Xenial)
-        - ROS Kinetic
+- Ubuntu 16.04 (Xenial)
+- ROS Kinetic
 ### Hardware
 - Decawave's DWM1001 Development Kit (x5 recommended: 1 tag, 4 anchors)
 
