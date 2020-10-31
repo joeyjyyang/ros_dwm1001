@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy, time, serial, os
+from ros_dwm1001.msg import UWBTag, UWBAnchor
 
 serialReadLine = ""
 
