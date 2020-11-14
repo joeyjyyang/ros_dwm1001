@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy, time, serial, os
-from ros_dwm1001.msg import UWBTag, UWBAnchor
+from ros_dwm1001.msg import Tag, Anchor
 
 serialReadLine = ""
 
@@ -13,6 +13,17 @@ serialPortDWM1001 = serial.Serial(
     #stopbits = serial.STOPBITS_TWO
     #bytesize = serial.SEVENBITS
 )
+
+# Initiaize ROS
+tag_msg = Tag()
+anchor1_msg = Anchor()
+anchor2_msg = Anchor()
+anchor3_msg = Anchor()
+
+tag_pub = rospy.Publisher("tag", Tag, queue_size=1)
+anchor1_pub = rospy.Publisher("anchor1", Anchor, queue_size=1)
+anchor2_pub = rospy.Publisher("anchor2", Anchor, queue_size=1)
+anchor3_pub = rospy.Publisher("anchor3", Anchor, queue_size=1)
 
 def run():
     # allow serial port to be detected by user

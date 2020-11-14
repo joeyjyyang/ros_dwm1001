@@ -12,8 +12,8 @@ catkin_python_setup()
 
 add_message_files(
   FILES
-  UWBAnchor.msg
-  UWBTag.msg
+  Anchor.msg
+  Tag.msg
 )
 
 generate_messages(
