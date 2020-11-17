@@ -64,11 +64,53 @@ def run():
     else:
         rospy.loginfo("Can't open port: "+ str(serialPortDWM1001.name))
  
+def parse(raw_line):
+  # Remove 2 blank spaces at end of line first.
+  # Split by comma after.
+  line = raw_line.strip().split(",")
+
+  num_anchors = int(line[1])
+
+  anchor_data_index = 2
+  anchor_data_length = num_anchors*6
+  anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
+  print(anchor_data)
+  #print(len(anchor_data))
+
+  # Create anchor objects.
+  for num in range(num_anchors):
+    offset = num*6
+    anchor = {
+    "anchor_number" : anchor_data[0 + offset],
+      "anchor_id" : anchor_data[1 + offset],
+      "x" : anchor_data[2 + offset],
+      "y" : anchor_data[3 + offset],
+      "z" : anchor_data[4 + offset],
+      "distance" : anchor_data[5 + offset]
+    }
+    print(anchor)
+
+  tag_data_index = anchor_data_index + anchor_data_length
+  tag_data = line[tag_data_index : tag_data_index + 5]
+  print(tag_data)
+  #print(len(tag_data))
+
+  # Create tag object.
+  tag = {
+    "x" : float(tag_data[1]),
+    "y" : float(tag_data[2]),
+    "z" : float(tag_data[3]),
+    "quality_factor" : float(line[4])
+  }
+  print(tag)
+
 def publish():
     # just read everything from serial port
     serialReadLine = serialPortDWM1001.read_until()
-    
-    rospy.loginfo(serialReadLine)
+
+    # Parse raw line.
+    line = parse(serialReadLine)
+    rospy.loginfo(line)
     #self.pubblishCoordinatesIntoTopics(self.splitByComma(serialReadLine))
     
 def end(rate):
