@@ -3,8 +3,6 @@
 import rospy, time, serial, os
 from ros_dwm1001.msg import Tag, Anchor
 
-serialReadLine = ""
-
 # initialize serial port connections
 serialPortDWM1001 = serial.Serial(
     port       = "/dev/ttyACM0",
@@ -24,6 +22,17 @@ tag_pub = rospy.Publisher("tag", Tag, queue_size=1)
 anchor1_pub = rospy.Publisher("anchor1", Anchor, queue_size=1)
 anchor2_pub = rospy.Publisher("anchor2", Anchor, queue_size=1)
 anchor3_pub = rospy.Publisher("anchor3", Anchor, queue_size=1)
+
+# Array to hold Anchors
+anchors = []
+
+# Tag object.
+tag = {
+  "x" : 0,
+  "y" : 0, 
+  "z" : 0,
+  "quality_factor" : 0
+}
 
 def run():
     # allow serial port to be detected by user
@@ -59,60 +68,64 @@ def run():
         serialPortDWM1001.write(b'lec')
         serialPortDWM1001.write(b'\r')
         rospy.loginfo("Reading DWM1001 coordinates")
-        rospy.loginfo("test")
     
     else:
         rospy.loginfo("Can't open port: "+ str(serialPortDWM1001.name))
  
-def parse(raw_line):
-  # Remove 2 blank spaces at end of line first.
-  # Split by comma after.
-  line = raw_line.strip().split(",")
+def parseSerial(raw_line):
+  global anchors, tag
 
-  num_anchors = int(line[1])
+  # Check if serial data is valid.
+  if raw_line[0] == 'DIST':
+    # Remove 2 blank spaces at end of line first.
+    # Split by comma after.
+    line = raw_line.strip().split(",")
 
-  anchor_data_index = 2
-  anchor_data_length = num_anchors*6
-  anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
-  print(anchor_data)
-  #print(len(anchor_data))
+    num_anchors = int(line[1])
 
-  # Create anchor objects.
-  for num in range(num_anchors):
-    offset = num*6
-    anchor = {
-    "anchor_number" : anchor_data[0 + offset],
-      "anchor_id" : anchor_data[1 + offset],
-      "x" : anchor_data[2 + offset],
-      "y" : anchor_data[3 + offset],
-      "z" : anchor_data[4 + offset],
-      "distance" : anchor_data[5 + offset]
-    }
-    print(anchor)
+    anchor_data_index = 2
+    anchor_data_length = num_anchors*6
+    anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
+    #print(anchor_data)
 
-  tag_data_index = anchor_data_index + anchor_data_length
-  tag_data = line[tag_data_index : tag_data_index + 5]
-  print(tag_data)
-  #print(len(tag_data))
+    # Create Anchor objects.
+    for num in range(num_anchors):
+      offset = num*6
+      anchor = {
+        "anchor_number" : anchor_data[0 + offset],
+        "anchor_id" : anchor_data[1 + offset],
+        "x" : anchor_data[2 + offset],
+        "y" : anchor_data[3 + offset],
+        "z" : anchor_data[4 + offset],
+        "distance" : anchor_data[5 + offset]
+      }
+      anchors.append(anchor)
+      print(anchor)
+ 
+    tag_data_index = anchor_data_index + anchor_data_length
+    tag_data = line[tag_data_index : tag_data_index + 5]
+    #print(tag_data)
 
-  # Create tag object.
-  tag = {
-    "x" : float(tag_data[1]),
-    "y" : float(tag_data[2]),
-    "z" : float(tag_data[3]),
-    "quality_factor" : float(line[4])
-  }
-  print(tag)
+    # Update Tag object.
+    tag["x"] = float(tag_data[1])
+    tag["y"] = float(tag_data[2])
+    tag["z"] = float(tag_data[3])
+    tag["quality_factor"] = float(line[4])
+    print(tag)
 
-def publish():
-    # just read everything from serial port
-    serialReadLine = serialPortDWM1001.read_until()
+def publishData():
+  # just read everything from serial port
+  serial_line = serialPortDWM1001.read_until()
+  
+  # Parse raw line.
+  parseSerial(serial_line)
 
-    # Parse raw line.
-    line = parse(serialReadLine)
-    rospy.loginfo(line)
-    #self.pubblishCoordinatesIntoTopics(self.splitByComma(serialReadLine))
-    
+  # Publish UWB data to ROS.
+  #
+  # TO DO
+  #
+  #
+        
 def end(rate):
     rospy.loginfo("Quitting, and sending reset command to dev board")
     serialPortDWM1001.write(b'reset')
@@ -137,5 +150,3 @@ if __name__ == '__main__':
     except rospy.ROSInterruptException:
         rospy.loginfo("end")
         end(rate)
-
-
