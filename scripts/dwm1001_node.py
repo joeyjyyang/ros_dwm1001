@@ -77,13 +77,13 @@ def run():
  
 def parseSerial(raw_line):
   global anchors, tag
-
+  
+  line = raw_line.strip().split(",")
+  
   # Check if serial data is valid.
-  if raw_line[0] == 'DIST':
+  if line[0] == "DIST":
     # Remove 2 blank spaces at end of line first.
     # Split by comma after.
-    line = raw_line.strip().split(",")
-
     num_anchors = int(line[1])
 
     anchor_data_index = 2
@@ -106,7 +106,7 @@ def parseSerial(raw_line):
       print(anchor)
  
     tag_data_index = anchor_data_index + anchor_data_length
-    tag_data = line[tag_data_index : tag_data_index + 5]
+    tag_data = line[tag_data_index : ]
     #print(tag_data)
 
     # Update Tag object.
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     
     try:
         while not rospy.is_shutdown():
-            publish()
+            publishData()
             rate.sleep()
    
     except rospy.ROSInterruptException:
