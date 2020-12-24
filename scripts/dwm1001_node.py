@@ -29,6 +29,9 @@ anchor4_pub = rospy.Publisher("anchor4", Anchor, queue_size=1)
 # Array to hold Anchors
 anchors = []
 
+# Number of anchors in system.
+num_anchors = 4
+
 # Tag object.
 tag = {
   "x" : 0,
@@ -36,11 +39,10 @@ tag = {
   "z" : 0,
   "quality_factor" : 0
 }
-
+          
 def run():
-    # allow serial port to be detected by user
-    os.popen("sudo chmod 777 /dev/ttyACM0", "w")
-
+    # Create anchor objects.
+    createAnchors()
     # close the serial port in case the previous run didn't closed it properly
     serialPortDWM1001.close()
     # sleep for one sec
@@ -51,20 +53,16 @@ def run():
     # check if the serial port is opened
     if(serialPortDWM1001.isOpen()):
         rospy.loginfo("Port opened: "+ str(serialPortDWM1001.name) )
-         
         # start sending commands to the board so we can initialize the board
         # reset incase previuos run didn't close properly
         serialPortDWM1001.write(b'reset')
         # send ENTER two times in order to access api
         serialPortDWM1001.write(b'\r')
-        # sleep for half a second
         time.sleep(0.5)
         serialPortDWM1001.write(b'\r')
-        # sleep for half second
         time.sleep(0.5)
         # send a third one - just in case
         serialPortDWM1001.write(b'\r')
-
         # give some time to DWM1001 to wake up
         time.sleep(2)
         # send command lec, so we can get positions is CSV format
@@ -74,47 +72,58 @@ def run():
     
     else:
         rospy.loginfo("Can't open port: "+ str(serialPortDWM1001.name))
- 
+
+def createAnchors():
+  global anchors, num_anchors
+   
+  for index in range(num_anchors):
+    anchor = {
+      #"anchor_number" : anchor_data[0 + offset],
+      "id" : 0,
+      "x" : 0,
+      "y" : 0,
+      "z" : 0,
+      "distance" : 0
+    }
+    anchors.append(anchor)
+  rospy.loginfo("Created anchors.")
+  
 def parseSerial(raw_line):
-  global anchors, tag
+  global anchors, tag, num_anchors
   
   line = raw_line.strip().split(",")
   
-  # Check if serial data is valid.
+  # Check if serial data is valid based on first index.
   if line[0] == "DIST":
-    # Remove 2 blank spaces at end of line first.
-    # Split by comma after.
-    num_anchors = int(line[1])
+    rospy.loginfo(line)
 
-    anchor_data_index = 2
-    anchor_data_length = num_anchors*6
-    anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
-    #print(anchor_data)
+    # Expected (valid) data length.
+    valid_length = 2 + num_anchors * 6 + 5
+      
+    # Check if serial data is valid based on total length and number of anchors.
+    if len(line) == valid_length and int(line[1]) == num_anchors:
+        anchor_data_index = 2
+        anchor_data_length = num_anchors * 6
+        anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
+    
+         # Update Anchor objects.
+        for index in range(num_anchors):
+          offset = index * 6
+      
+          anchors[index]["id"] = anchor_data[1 + offset]
+          anchors[index]["x"] = anchor_data[2 + offset]
+          anchors[index]["y"] = anchor_data[3 + offset]
+          anchors[index]["z"] = anchor_data[4 + offset]
+          anchors[index]["distance"] = anchor_data[5 + offset]
 
-    # Create Anchor objects.
-    for num in range(num_anchors):
-      offset = num*6
-      anchor = {
-        #"anchor_number" : anchor_data[0 + offset],
-        "id" : anchor_data[1 + offset],
-        "x" : anchor_data[2 + offset],
-        "y" : anchor_data[3 + offset],
-        "z" : anchor_data[4 + offset],
-        "distance" : anchor_data[5 + offset]
-      }
-      anchors.append(anchor)
-      print(anchor)
- 
-    tag_data_index = anchor_data_index + anchor_data_length
-    tag_data = line[tag_data_index : ]
-    #print(tag_data)
+        tag_data_index = anchor_data_index + anchor_data_length
+        tag_data = line[tag_data_index : ]
 
-    # Update Tag object.
-    tag["x"] = float(tag_data[1])
-    tag["y"] = float(tag_data[2])
-    tag["z"] = float(tag_data[3])
-    tag["quality_factor"] = float(line[4])
-    print(tag)
+        # Update Tag object.
+        tag["x"] = float(tag_data[1])
+        tag["y"] = float(tag_data[2])
+        tag["z"] = float(tag_data[3])
+        tag["quality_factor"] = float(tag_data[4])
 
 def publishData():
   global anchors, tag
@@ -143,12 +152,13 @@ def publishData():
     anchor_msgs[index].distance = anchors[index]["distance"]
 
   # Publish UWB data to ROS.
-  tag_pub.pub(tag_msg)
-  anchor1_pub.pub(anchor1_msg) 
-  anchor2_pub.pub(anchor2_msg)
-  anchor3_pub.pub(anchor3_msg)
-  anchor4_pub.pub(anchor4_msg)
+  tag_pub.publish(tag_msg)
+  anchor1_pub.publish(anchor1_msg) 
+  anchor2_pub.publish(anchor2_msg)
+  anchor3_pub.publish(anchor3_msg)
+  anchor4_pub.publish(anchor4_msg)
 
+'''
 def end(rate):
     rospy.loginfo("Quitting, and sending reset command to dev board")
     serialPortDWM1001.write(b'reset')
@@ -158,7 +168,7 @@ def end(rate):
     if "reset" in serialReadLine:
         rospy.loginfo("succesfully closed ")
         serialPortDWM1001.close()
-
+'''
 if __name__ == '__main__':
     
     rospy.init_node("dwm1001_node")
@@ -171,5 +181,6 @@ if __name__ == '__main__':
             rate.sleep()
    
     except rospy.ROSInterruptException:
-        rospy.loginfo("end")
-        end(rate)
+        pass
+	#rospy.loginfo("end")
+        #end(rate)
