@@ -40,7 +40,9 @@ tag = {
   "quality_factor" : 0
 }
           
-def run():
+def init():
+    global serialPortDWM1001
+
     # Create anchor objects.
     createAnchors()
     # close the serial port in case the previous run didn't closed it properly
@@ -65,14 +67,32 @@ def run():
         serialPortDWM1001.write(b'\r')
         # give some time to DWM1001 to wake up
         time.sleep(2)
-        # send command lec, so we can get positions is CSV format
-        serialPortDWM1001.write(b'lec')
-        serialPortDWM1001.write(b'\r')
-        rospy.loginfo("Reading DWM1001 coordinates")
-    
+        
     else:
         rospy.loginfo("Can't open port: "+ str(serialPortDWM1001.name))
 
+def run():
+    global serialPortDWM1001
+
+    # send command lec, so we can get positions is CSV format
+    serialPortDWM1001.write(b'lec')
+    serialPortDWM1001.write(b'\r')
+    rospy.loginfo("Reading DWM1001 coordinates")
+    time.sleep(1)
+
+def set_rate():
+    global serialPortDWM1001
+     
+    serialPortDWM1001.write(b'aurs')
+    serialPortDWM1001.write(b' ')
+    serialPortDWM1001.write(b'1')
+    time.sleep(0.5)
+    serialPortDWM1001.write(b' ')
+    serialPortDWM1001.write(b'1')
+    serialPortDWM1001.write(b'\r')
+    time.sleep(1)
+    rospy.loginfo("Set UWB publish rate to 100 ms or 10 Hz")
+  
 def createAnchors():
   global anchors, num_anchors
    
@@ -95,7 +115,7 @@ def parseSerial(raw_line):
   
   # Check if serial data is valid based on first index.
   if line[0] == "DIST":
-    rospy.loginfo(line)
+    #rospy.loginfo(line)
 
     # Expected (valid) data length.
     valid_length = 2 + num_anchors * 6 + 5
@@ -126,11 +146,11 @@ def parseSerial(raw_line):
         tag["quality_factor"] = float(tag_data[4])
 
 def publishData():
-  global anchors, tag
-
+  global serialPortDWM1001, anchors, tag, tag_msg, anchor_msgs, tag_pub, anchor1_pub, anchor2_pub, anchor3_pub, anchor4_pub
+  
   # just read everything from serial port
   serial_line = serialPortDWM1001.read_until()
-  
+   
   # Parse raw line.
   parseSerial(serial_line)
 
@@ -157,7 +177,7 @@ def publishData():
   anchor2_pub.publish(anchor2_msg)
   anchor3_pub.publish(anchor3_msg)
   anchor4_pub.publish(anchor4_msg)
-
+  
 '''
 def end(rate):
     rospy.loginfo("Quitting, and sending reset command to dev board")
@@ -172,7 +192,9 @@ def end(rate):
 if __name__ == '__main__':
     
     rospy.init_node("dwm1001_node")
-    rate = rospy.Rate(15)
+    rate = rospy.Rate(10)
+    init()
+    set_rate()
     run()
     
     try:
