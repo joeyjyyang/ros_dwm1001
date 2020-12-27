@@ -58,12 +58,10 @@ def init():
         # start sending commands to the board so we can initialize the board
         # reset incase previuos run didn't close properly
         serialPortDWM1001.write(b'reset')
-        # send ENTER two times in order to access api
         serialPortDWM1001.write(b'\r')
         time.sleep(0.5)
         serialPortDWM1001.write(b'\r')
         time.sleep(0.5)
-        # send a third one - just in case
         serialPortDWM1001.write(b'\r')
         # give some time to DWM1001 to wake up
         time.sleep(2)
@@ -71,7 +69,7 @@ def init():
     else:
         rospy.loginfo("Can't open port: "+ str(serialPortDWM1001.name))
 
-def run():
+def read():
     global serialPortDWM1001
 
     # send command lec, so we can get positions is CSV format
@@ -90,9 +88,9 @@ def set_rate():
     serialPortDWM1001.write(b' ')
     serialPortDWM1001.write(b'1')
     serialPortDWM1001.write(b'\r')
-    time.sleep(1)
     rospy.loginfo("Set UWB publish rate to 100 ms or 10 Hz")
-  
+    time.sleep(1)
+
 def createAnchors():
   global anchors, num_anchors
    
@@ -115,8 +113,6 @@ def parseSerial(raw_line):
   
   # Check if serial data is valid based on first index.
   if line[0] == "DIST":
-    #rospy.loginfo(line)
-
     # Expected (valid) data length.
     valid_length = 2 + num_anchors * 6 + 5
       
@@ -178,25 +174,26 @@ def publishData():
   anchor3_pub.publish(anchor3_msg)
   anchor4_pub.publish(anchor4_msg)
   
-'''
-def end(rate):
-    rospy.loginfo("Quitting, and sending reset command to dev board")
+def cleanup():
+    global serialPortDWM1001
+
     serialPortDWM1001.write(b'reset')
     serialPortDWM1001.write(b'\r')
-    rate.sleep()
+    rospy.loginfo("Sent reset command to UWB tag.")    
+    time.sleep(0.5)
+    serialPortDWM1001.close()
+    rospy.loginfo("Closed serial connection to UWB tag.")
     
-    if "reset" in serialReadLine:
-        rospy.loginfo("succesfully closed ")
-        serialPortDWM1001.close()
-'''
 if __name__ == '__main__':
     
     rospy.init_node("dwm1001_node")
     rate = rospy.Rate(10)
     init()
     set_rate()
-    run()
+    read()
     
+    rospy.on_shutdown(cleanup)
+   
     try:
         while not rospy.is_shutdown():
             publishData()
@@ -204,5 +201,3 @@ if __name__ == '__main__':
    
     except rospy.ROSInterruptException:
         pass
-	#rospy.loginfo("end")
-        #end(rate)
