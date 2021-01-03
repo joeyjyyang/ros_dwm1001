@@ -118,19 +118,21 @@ def parseSerial(raw_line):
       
     # Check if serial data is valid based on total length and number of anchors.
     if len(line) == valid_length and int(line[1]) == num_anchors:
+	rospy.loginfo(line)
+
         anchor_data_index = 2
         anchor_data_length = num_anchors * 6
         anchor_data = line[anchor_data_index : anchor_data_index + anchor_data_length]
     
-         # Update Anchor objects.
+        # Update Anchor objects.
         for index in range(num_anchors):
-          offset = index * 6
+          offset = index * 6 # 0->0, 1->6, 2->12, 3->18
       
           anchors[index]["id"] = anchor_data[1 + offset]
-          anchors[index]["x"] = anchor_data[2 + offset]
-          anchors[index]["y"] = anchor_data[3 + offset]
-          anchors[index]["z"] = anchor_data[4 + offset]
-          anchors[index]["distance"] = anchor_data[5 + offset]
+          anchors[index]["x"] = float(anchor_data[2 + offset])
+          anchors[index]["y"] = float(anchor_data[3 + offset])
+          anchors[index]["z"] = float(anchor_data[4 + offset])
+          anchors[index]["distance"] = float(anchor_data[5 + offset])
 
         tag_data_index = anchor_data_index + anchor_data_length
         tag_data = line[tag_data_index : ]
@@ -159,8 +161,8 @@ def publishData():
   tag_msg.z = tag["z"]
   tag_msg.quality_factor = tag["quality_factor"]
 
-  for index in range(len(anchors)):
-    anchor_msgs[index].header.stamp = time_stamp
+  for index in range(num_anchors):
+    #anchor_msgs[index].header.stamp = time_stamp
     anchor_msgs[index].id = anchors[index]["id"]
     anchor_msgs[index].x = anchors[index]["x"]
     anchor_msgs[index].y = anchors[index]["y"]
@@ -169,10 +171,10 @@ def publishData():
 
   # Publish UWB data to ROS.
   tag_pub.publish(tag_msg)
-  anchor1_pub.publish(anchor1_msg) 
-  anchor2_pub.publish(anchor2_msg)
-  anchor3_pub.publish(anchor3_msg)
-  anchor4_pub.publish(anchor4_msg)
+  anchor1_pub.publish(anchor_msgs[0]) 
+  anchor2_pub.publish(anchor_msgs[1])
+  anchor3_pub.publish(anchor_msgs[2])
+  anchor4_pub.publish(anchor_msgs[3])
   
 def cleanup():
     global serialPortDWM1001
