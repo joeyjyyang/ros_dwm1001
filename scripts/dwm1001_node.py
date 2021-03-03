@@ -2,6 +2,7 @@
 
 import rospy, time, serial, os
 from ros_dwm1001.msg import Tag, Anchor
+from visualization_msgs.msg import Marker
 
 # initialize serial port connections
 serialPortDWM1001 = serial.Serial(
@@ -13,18 +14,18 @@ serialPortDWM1001 = serial.Serial(
 )
 
 # Initiaize ROS
-tag_msg = Tag()
-anchor1_msg = Anchor()
-anchor2_msg = Anchor()
-anchor3_msg = Anchor()
-anchor4_msg = Anchor()
+tag_msg = Marker()
+anchor1_msg = Marker()
+anchor2_msg = Marker()
+anchor3_msg = Marker()
+anchor4_msg = Marker()
 anchor_msgs = [anchor1_msg, anchor2_msg, anchor3_msg, anchor4_msg]
 
-tag_pub = rospy.Publisher("tag", Tag, queue_size=1)
-anchor1_pub = rospy.Publisher("anchor1", Anchor, queue_size=1)
-anchor2_pub = rospy.Publisher("anchor2", Anchor, queue_size=1)
-anchor3_pub = rospy.Publisher("anchor3", Anchor, queue_size=1)
-anchor4_pub = rospy.Publisher("anchor4", Anchor, queue_size=1)
+tag_pub = rospy.Publisher("tag", Marker, queue_size=1)
+anchor1_pub = rospy.Publisher("anchor1", Marker, queue_size=1)
+anchor2_pub = rospy.Publisher("anchor2", Marker, queue_size=1)
+anchor3_pub = rospy.Publisher("anchor3", Marker, queue_size=1)
+anchor4_pub = rospy.Publisher("anchor4", Marker, queue_size=1)
 
 # Array to hold Anchors
 anchors = []
@@ -168,20 +169,43 @@ def publishData():
     time_stamp = rospy.get_rostime()
  
     tag_msg.header.stamp = time_stamp
-    tag_msg.x = tag["x"]
-    tag_msg.y = tag["y"]
-    tag_msg.z = tag["z"]
-    tag_msg.quality_factor = tag["quality_factor"]
+    tag_msg.header.frame_id = "uwb"
+    #tag_msg.child_frame_id = ""
+    tag_msg.pose.position.x = tag["x"]
+    tag_msg.pose.position.y = tag["y"]
+    tag_msg.pose.position.z = tag["z"]
+    tag_msg.type = 2
+    tag_msg.action = 0
+    tag_msg.scale.x = 0.05
+    tag_msg.scale.y = 0.05
+    tag_msg.scale.z = 0.05
+    tag_msg.color.r = 1.0
+    tag_msg.color.g = 1.0
+    tag_msg.color.b = 1.0
+    tag_msg.color.a = 1.0
+    #tag_msg.quality_factor = tag["quality_factor"]
 
     for index in range(num_anchors):
       anchor_msgs[index].header.stamp = time_stamp
-      anchor_msgs[index].id = anchors[index]["id"]
-      anchor_msgs[index].x = anchors[index]["x"]
-      anchor_msgs[index].y = anchors[index]["y"]
-      anchor_msgs[index].z = anchors[index]["z"]
-      anchor_msgs[index].distance = anchors[index]["distance"]
+      #anchor_msgs[index].id = int(anchors[index]["id"])
+      anchor_msgs[index].header.frame_id = "uwb"
+      anchor_msgs[index].pose.position.x = anchors[index]["x"]
+      anchor_msgs[index].pose.position.y = anchors[index]["y"]
+      anchor_msgs[index].pose.position.z = anchors[index]["z"]
+      #anchor_msgs[index].distance = anchors[index]["distance"]
+      anchor_msgs[index].type = 2
+      anchor_msgs[index].action = 0
+      anchor_msgs[index].scale.x = 0.05
+      anchor_msgs[index].scale.y = 0.05
+      anchor_msgs[index].scale.z = 0.05
+      anchor_msgs[index].color.r = 0.0
+      anchor_msgs[index].color.g = 1.0
+      anchor_msgs[index].color.b = 0.0
+      anchor_msgs[index].color.a = 1.0
 
-    # Publish UWB data to ROS.
+      anchor_msgs[index].lifetime = rospy.Duration(0)
+
+# Publish UWB data to ROS.
     tag_pub.publish(tag_msg)
     anchor1_pub.publish(anchor_msgs[0]) 
     anchor2_pub.publish(anchor_msgs[1])
