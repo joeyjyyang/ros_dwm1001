@@ -21,11 +21,11 @@ anchor3_msg = Marker()
 anchor4_msg = Marker()
 anchor_msgs = [anchor1_msg, anchor2_msg, anchor3_msg, anchor4_msg]
 
-tag_pub = rospy.Publisher("tag", Marker, queue_size=10)
-anchor1_pub = rospy.Publisher("anchor1", Marker, queue_size=10)
-anchor2_pub = rospy.Publisher("anchor2", Marker, queue_size=10)
-anchor3_pub = rospy.Publisher("anchor3", Marker, queue_size=10)
-anchor4_pub = rospy.Publisher("anchor4", Marker, queue_size=10)
+tag_pub = rospy.Publisher("tag", Marker, queue_size=1)
+anchor1_pub = rospy.Publisher("anchor1", Marker, queue_size=1)
+anchor2_pub = rospy.Publisher("anchor2", Marker, queue_size=1)
+anchor3_pub = rospy.Publisher("anchor3", Marker, queue_size=1)
+anchor4_pub = rospy.Publisher("anchor4", Marker, queue_size=1)
 
 # Array to hold Anchors
 anchors = []
