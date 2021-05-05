@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy, time, serial, os
-from ros_dwm1001.msg import Tag, Anchor
 from visualization_msgs.msg import Marker
 
 # initialize serial port connections
