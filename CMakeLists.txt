@@ -10,13 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_python_setup()
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  sensor_msgs
-  visualization_msgs
-)
-
 catkin_package(
   CATKIN_DEPENDS rospy std_msgs sensor_msgs visualization_msgs
 )
